@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+  <meta name="theme-color" content="#060609">
+  <title>SinEdge — Live 4K Streams</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@800;900&family=Inter:wght@500;600;700;800&family=JetBrains+Mono:wght@600;700&display=swap" rel="stylesheet">
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            brand: ['Cinzel', 'serif'],
+            sans: ['Inter', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --safe-top: env(safe-area-inset-top, 0px);
+      --safe-bottom: env(safe-area-inset-bottom, 0px);
+      --safe-left: env(safe-area-inset-left, 0px);
+      --safe-right: env(safe-area-inset-right, 0px);
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      min-height: 100dvh;
+      background-color: #060609;
+      color: #ffffff;
+      font-family: 'Inter', sans-serif;
+      overflow-x: hidden;
+      user-select: none;
+      touch-action: manipulation;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Safe-area aware layout wrappers */
+    .safe-header {
+      padding-top: var(--safe-top);
+      padding-left: max(8px, var(--safe-left));
+      padding-right: max(8px, var(--safe-right));
+    }
+
+    .safe-main {
+      padding-left: max(6px, var(--safe-left));
+      padding-right: max(6px, var(--safe-right));
+      padding-bottom: max(16px, var(--safe-bottom));
+    }
+
+    /* Metallic Logo Gradients */
+    .text-crimson-gradient {
+      background: linear-gradient(135deg, #ff3b47 0%, #e50914 55%, #991b1b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .text-silver-gradient {
+      background: linear-gradient(135deg, #ffffff 0%, #cbd5e1 55%, #64748b 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    /* ==========================================================================
+       FLAWLESS MULTI-DEVICE RESPONSIVE GRID SYSTEM (320px to 4K Ultrawide)
+       ========================================================================== */
+    .video-grid-auto {
+      display: grid;
+      width: 100%;
+      /* Extra-small phones (<360px): 2 compact columns with 5px gap */
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    /* Standard Smartphones (360px - 639px): 2 columns, 6px gap */
+    @media (min-width: 360px) {
+      .video-grid-auto {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 6px;
+      }
+    }
+
+    /* Large Phones / Phablets / Mobile Landscape (640px - 767px): 3 columns */
+    @media (min-width: 640px) {
+      .video-grid-auto {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 8px;
+      }
+      .safe-main {
+        padding-left: max(8px, var(--safe-left));
+        padding-right: max(8px, var(--safe-right));
+      }
+    }
+
+    /* Tablets / iPads Portrait & Landscape (768px - 1023px): 4 columns */
+    @media (min-width: 768px) {
+      .video-grid-auto {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 9px;
+      }
+    }
+
+    /* Laptops / Small Desktops (1024px - 1279px): 5 columns */
+    @media (min-width: 1024px) {
+      .video-grid-auto {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 10px;
+      }
+      .safe-main {
+        padding-left: max(10px, var(--safe-left));
+        padding-right: max(10px, var(--safe-right));
+      }
+    }
+
+    /* Standard 1080p Desktops (1280px - 1535px): 6 columns */
+    @media (min-width: 1280px) {
+      .video-grid-auto {
+        grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 10px;
+      }
+    }
+
+    /* Large Desktops / QHD (1536px - 1919px): 7 columns */
+    @media (min-width: 1536px) {
+      .video-grid-auto {
+        grid-template-columns: repeat(7, minmax(0, 1fr));
+        gap: 11px;
+      }
+    }
+
+    /* 4K & Ultrawide Monitors (1920px+): 8 columns */
+    @media (min-width: 1920px) {
+      .video-grid-auto {
+        grid-template-columns: repeat(8, minmax(0, 1fr));
+        gap: 12px;
+      }
+    }
+
+    /* Manual Column Density Overrides (User Switchable on Mobile & Desktop) */
+    .video-grid-manual-1 { display: grid; width: 100%; grid-template-columns: repeat(1, minmax(0, 1fr)); gap: 8px; }
+    .video-grid-manual-2 { display: grid; width: 100%; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
+    .video-grid-manual-3 { display: grid; width: 100%; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+    .video-grid-manual-4 { display: grid; width: 100%; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 9px; }
+    .video-grid-manual-5 { display: grid; width: 100%; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+    .video-grid-manual-6 { display: grid; width: 100%; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+    .video-grid-manual-7 { display: grid; width: 100%; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 10px; }
+    .video-grid-manual-8 { display: grid; width: 100%; grid-template-columns: repeat(8, minmax(0, 1fr)); gap: 10px; }
+
+    /* ==========================================================================
+       PROPORTIONAL VIDEO THUMBNAIL OVERLAYS (CSS clamp() Fluid Scaling)
+       ========================================================================== */
+    .video-thumb {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      overflow: hidden;
+      border-radius: clamp(6px, 1.2vw, 10px);
+      background-color: #101016;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      transition: transform 0.22s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.22s ease, box-shadow 0.22s ease;
+      cursor: pointer;
+      isolation: isolate;
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+      .video-thumb:hover {
+        transform: translateY(-2px) scale(1.018);
+        border-color: rgba(229, 9, 20, 0.85);
+        box-shadow: 0 12px 28px -6px rgba(229, 9, 20, 0.5);
+        z-index: 10;
+      }
+      .video-thumb:hover img {
+        transform: scale(1.1);
+        filter: brightness(1.08) contrast(1.05);
+      }
+      .video-thumb:hover .preview-shimmer {
+        opacity: 1;
+        animation: shimmerMove 1.5s infinite linear;
+      }
+      .video-thumb:hover .scrub-fill {
+        width: 96% !important;
+      }
+      .video-thumb:hover .play-circle {
+        background-color: #e50914;
+        border-color: #f87171;
+        transform: scale(1.12);
+        box-shadow: 0 0 22px rgba(229, 9, 20, 0.85);
+      }
+    }
+
+    /* Active Touch Feedback for Mobile & Tablets */
+    .video-thumb:active {
+      transform: scale(0.975);
+      border-color: #e50914;
+    }
+    .video-thumb:active .play-circle {
+      background-color: #e50914;
+      transform: scale(1.08);
+    }
+
+    .video-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 18%;
+      transition: transform 3.5s cubic-bezier(0.25, 1, 0.5, 1), filter 0.25s ease;
+      display: block;
+    }
+
+    /* Fluid Center Play Button — Never obscures face on small mobile screens */
+    .play-circle {
+      width: clamp(28px, 6.5vw, 44px);
+      height: clamp(28px, 6.5vw, 44px);
+      border-radius: 9999px;
+      background-color: rgba(0, 0, 0, 0.62);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      border: 1.5px solid rgba(255, 255, 255, 0.35);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 0 18px rgba(0, 0, 0, 0.75);
+      transition: all 0.2s ease;
+    }
+
+    .play-circle svg {
+      width: clamp(12px, 3vw, 19px);
+      height: clamp(12px, 3vw, 19px);
+      margin-left: 2px;
+      fill: #ffffff;
+      color: #ffffff;
+    }
+
+    /* Fluid Micro-Badges for Top-Left, Top-Right & Bottom-Right */
+    .micro-badge {
+      font-size: clamp(8px, 1.5vw, 10px);
+      line-height: 1;
+      padding: clamp(2px, 0.4vw, 3.5px) clamp(4px, 0.8vw, 6px);
+      border-radius: 4px;
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+
+    .duration-badge {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: clamp(8.5px, 1.6vw, 11px);
+      line-height: 1;
+      padding: clamp(2px, 0.4vw, 3px) clamp(4px, 0.8vw, 6px);
+      border-radius: 4px;
+      background-color: rgba(0, 0, 0, 0.88);
+      color: #ffffff;
+      font-weight: 700;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    /* Video preview shimmer overlay */
+    .preview-shimmer {
+      background: linear-gradient(110deg, transparent 25%, rgba(255, 255, 255, 0.09) 50%, transparent 75%);
+      background-size: 200% 100%;
+      opacity: 0;
+      transition: opacity 0.25s ease;
+    }
+
+    @keyframes shimmerMove {
+      0% { background-position: 200% 0; }
+      100% { background-position: -200% 0; }
+    }
+
+    .scrub-fill {
+      transition: width 2.8s linear;
+    }
+
+    /* Play button pulse ring in Modal */
+    @keyframes pulseRing {
+      0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 9, 20, 0.8); }
+      70% { transform: scale(1); box-shadow: 0 0 0 18px rgba(229, 9, 20, 0); }
+      100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(229, 9, 20, 0); }
+    }
+    .play-pulse {
+      animation: pulseRing 1.85s infinite;
+    }
+
+    /* Hide scrollbar for clean horizontal pill bars on tiny screens */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+  </style>
+</head>
+<body class="min-h-[100dvh] flex flex-col bg-[#060609] text-white">
+
+  <!-- ========================================================================
+       STICKY ADAPTIVE HEADER (Responsive across 320px Mobile to 4K Desktop)
+       ======================================================================== -->
+  <header class="sticky top-0 z-40 bg-[#060609]/92 backdrop-blur-xl border-b border-white/10 safe-header">
+    <div class="w-full h-11 sm:h-12 flex items-center justify-between gap-1.5 sm:gap-3">
+      
+      <!-- Brand Logo + Live Pulse Dot (Direct Same-Tab Offer Link) -->
+      <a href="https://auctionr.org/4/16b5f2c993afc614babb488d2a8490b6" target="_self" class="flex items-center gap-1.5 sm:gap-2 shrink-0 focus:outline-none group">
+        <div class="w-6 h-6 sm:w-7 sm:h-7 rounded-md bg-gradient-to-br from-red-600 via-red-900 to-black p-[1px] shadow-md shadow-red-600/30">
+          <div class="w-full h-full bg-[#0b0b0f] rounded-[5px] flex items-center justify-center relative overflow-hidden">
+            <span class="font-brand font-black text-sm sm:text-base text-red-500">S</span>
+            <div class="absolute -right-1 -bottom-1 w-2.5 h-2.5 bg-gradient-to-tl from-white to-slate-400 rotate-45"></div>
+          </div>
+        </div>
+        <div class="flex items-baseline text-lg sm:text-2xl font-black tracking-tight">
+          <span class="text-crimson-gradient font-brand">Sin</span>
+          <span class="text-silver-gradient font-brand italic">Edge</span>
+        </div>
+        <span class="flex items-center gap-1 px-1.5 py-0.5 rounded bg-red-600/15 border border-red-500/30">
+          <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 animate-ping"></span>
+          <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-red-500 -ml-2.5 sm:-ml-3"></span>
+          <span id="onlineCounter" class="text-[9px] sm:text-[10px] font-mono font-bold text-red-400 hidden xs:inline sm:inline">4,829</span>
+        </span>
+      </a>
+
+      <!-- Center/Right Adaptive Controls -->
+      <div class="flex items-center gap-1 sm:gap-2 overflow-x-auto no-scrollbar py-1">
+        
+        <!-- Visual Filter Pills (ALL / LIVE / 4K) -->
+        <div class="flex items-center gap-0.5 bg-white/[0.04] p-0.5 rounded-lg border border-white/10 shrink-0">
+          <button onclick="filterGrid('all', this)" class="tab-pill px-2 sm:px-2.5 py-1 rounded-md bg-red-600 text-white text-[10px] sm:text-[11px] font-extrabold flex items-center gap-1 transition">
+            <i data-lucide="flame" class="w-3 h-3 fill-current hidden xs:inline"></i>
+            <span>ALL</span>
+          </button>
+          <button onclick="filterGrid('live', this)" class="tab-pill px-2 sm:px-2.5 py-1 rounded-md text-neutral-300 hover:text-white text-[10px] sm:text-[11px] font-extrabold flex items-center gap-1 transition">
+            <span class="w-1.5 h-1.5 rounded-full bg-red-500 animate-ping"></span>
+            <span>LIVE</span>
+          </button>
+          <button onclick="filterGrid('4k', this)" class="tab-pill px-2 sm:px-2.5 py-1 rounded-md text-neutral-300 hover:text-white text-[10px] sm:text-[11px] font-extrabold flex items-center gap-1 transition">
+            <span>4K</span>
+          </button>
+        </div>
+
+        <!-- Mobile & Small Screen Column Switcher (1x / 2x / 3x) -->
+        <div class="flex md:hidden items-center gap-0.5 bg-white/[0.04] p-0.5 rounded-lg border border-white/10 shrink-0" title="Mobile Grid Columns">
+          <button onclick="setGridColumns(1, this)" class="col-btn-mobile px-1.5 py-1 rounded text-[9px] font-mono font-bold text-neutral-400 hover:text-white transition">1x</button>
+          <button onclick="setGridColumns(2, this)" class="col-btn-mobile px-1.5 py-1 rounded text-[9px] font-mono font-bold bg-red-600 text-white transition">2x</button>
+          <button onclick="setGridColumns(3, this)" class="col-btn-mobile px-1.5 py-1 rounded text-[9px] font-mono font-bold text-neutral-400 hover:text-white transition">3x</button>
+        </div>
+
+        <!-- Tablet & Desktop Column Density Switcher (AUTO / 4x / 5x / 6x / 7x / 8x) -->
+        <div class="hidden md:flex items-center gap-0.5 bg-white/[0.04] p-0.5 rounded-lg border border-white/10 shrink-0" title="Grid Density">
+          <button onclick="setGridColumns('auto', this)" class="col-btn-desktop px-2 py-1 rounded text-[10px] font-mono font-bold bg-red-600 text-white transition">AUTO</button>
+          <button onclick="setGridColumns(4, this)" class="col-btn-desktop px-2 py-1 rounded text-[10px] font-mono font-bold text-neutral-400 hover:text-white transition">4x</button>
+          <button onclick="setGridColumns(5, this)" class="col-btn-desktop px-2 py-1 rounded text-[10px] font-mono font-bold text-neutral-400 hover:text-white transition">5x</button>
+          <button onclick="setGridColumns(6, this)" class="col-btn-desktop px-2 py-1 rounded text-[10px] font-mono font-bold text-neutral-400 hover:text-white transition">6x</button>
+          <button onclick="setGridColumns(7, this)" class="col-btn-desktop px-2 py-1 rounded text-[10px] font-mono font-bold text-neutral-400 hover:text-white transition">7x</button>
+          <button onclick="setGridColumns(8, this)" class="col-btn-desktop px-2 py-1 rounded text-[10px] font-mono font-bold text-neutral-400 hover:text-white transition">8x</button>
+        </div>
+
+        <!-- Direct Same-Tab VIP / LIVE CAM Action Link -->
+        <a href="https://auctionr.org/4/16b5f2c993afc614babb488d2a8490b6" target="_self" class="px-2 sm:px-3 py-1 sm:py-1.5 rounded-lg bg-gradient-to-r from-red-600 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-extrabold text-[10px] sm:text-xs flex items-center gap-1 shadow-lg shadow-red-600/30 transition shrink-0">
+          <i data-lucide="video" class="w-3.5 h-3.5 fill-current"></i>
+          <span class="hidden xs:inline">LIVE CAM</span>
+          <span class="xs:hidden">VIP</span>
+        </a>
+      </div>
+
+    </div>
+  </header>
+
+  <!-- ========================================================================
+       EDGE-TO-EDGE 16:9 VIDEO THUMBNAIL WALL (ZERO TEXT BELOW CARDS)
+       ======================================================================== -->
+  <main class="flex-1 w-full pt-1.5 sm:pt-2 pb-16 safe-main">
+    <div id="videoWall" class="video-grid-auto">
+      <!-- 40 Realistic Video-Styled Image Cards Injected by JS -->
+    </div>
+
+    <!-- Bottom Load More / Unlock Full Archive Same-Tab Link -->
+    <div class="w-full flex justify-center mt-4 sm:mt-6 mb-4">
+      <a href="https://auctionr.org/4/16b5f2c993afc614babb488d2a8490b6" target="_self" class="px-5 py-2.5 sm:px-8 sm:py-3 rounded-full bg-gradient-to-r from-red-600 via-red-700 to-rose-700 hover:from-red-500 hover:to-rose-600 text-white font-extrabold text-xs sm:text-sm tracking-wider uppercase flex items-center gap-2 shadow-[0_0_30px_rgba(229,9,20,0.5)] border border-red-400/30 transition transform active:scale-95">
+        <i data-lucide="play-circle" class="w-4 h-4 sm:w-5 sm:h-5"></i>
+        <span>LOAD MORE 4K STREAMS (1,240+)</span>
+      </a>
+    </div>
+  </main>
+
+  <!-- Floating Bottom Quick-Access Bar (Same-Tab Redirect) -->
+  <a href="https://auctionr.org/4/16b5f2c993afc614babb488d2a8490b6" target="_self" class="fixed bottom-2.5 left-1/2 -translate-x-1/2 z-30 px-4 py-2 rounded-full bg-black/85 backdrop-blur-xl border border-red-500/40 shadow-[0_0_25px_rgba(229,9,20,0.55)] flex items-center gap-2 text-white hover:bg-red-600/90 transition cursor-pointer">
+    <span class="w-2 h-2 rounded-full bg-red-500 animate-ping"></span>
+    <span class="text-[11px] sm:text-xs font-extrabold tracking-wide uppercase whitespace-nowrap">284 PRIVATE CAMS ONLINE NOW • TAP TO WATCH</span>
+    <i data-lucide="chevron-right" class="w-4 h-4 text-red-400"></i>
+  </a>
+
+  <!-- ========================================================================
+       RESPONSIVE FULLSCREEN VIDEO PLAYER MODAL (Clicking ANYWHERE redirects in SAME tab)
+       ======================================================================== -->
+  <div id="playerModal" onclick="goToOffer(event)" class="fixed inset-0 z-50 bg-black/95 backdrop-blur-xl hidden items-center justify-center p-2 sm:p-4 md:p-6 cursor-pointer">
+    
+    <!-- Floating Close Button (Also redirects to Offer in SAME tab when clicked) -->
+    <a href="https://auctionr.org/4/16b5f2c993afc614babb488d2a8490b6" target="_self" onclick="goToOffer(event)" aria-label="Close player" class="fixed top-3 right-3 sm:top-5 sm:right-5 z-50 w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white/10 hover:bg-red-600 active:scale-95 text-white flex items-center justify-center transition border border-white/15 shadow-lg">
+      <i data-lucide="x" class="w-5 h-5"></i>
+    </a>
+
+    <!-- 16:9 Responsive Video Player Frame (Wrapped with same-tab redirect) -->
+    <a href="https://auctionr.org/4/16b5f2c993afc614babb488d2a8490b6" target="_self" onclick="goToOffer(event)" class="relative block w-full max-w-5xl aspect-video bg-[#08080c] rounded-xl sm:rounded-2xl overflow-hidden shadow-[0_0_90px_rgba(229,9,20,0.45)] border border-white/15 cursor-pointer group">
+      
+      <!-- Selected Video Frame Image -->
+      <img id="modalPoster" src="" alt="Live Stream" class="w-full h-full object-cover object-[center_18%] scale-105 transition-transform duration-1000 filter brightness-75">
+      
+      <!-- Dark Cinema Vignette -->
+      <div class="absolute inset-0 bg-gradient-to-t from-black/95 via-black/30 to-black/65"></div>
+
+      <!-- Top-Left Stream Status Badges -->
+      <div class="absolute top-2.5 left-2.5 sm:top-4 sm:left-4 flex items-center gap-1.5 sm:gap-2">
+        <span class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded bg-red-600 text-white text-[10px] sm:text-xs font-extrabold tracking-wider flex items-center gap-1.5 shadow-lg">
+          <span class="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-white animate-ping"></span> LIVE
+        </span>
+        <span id="modalBadge" class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded bg-black/80 text-neutral-200 text-[10px] sm:text-xs font-mono font-bold border border-white/15">
+          4K 60FPS
+        </span>
+        <span id="modalViewers" class="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded bg-black/70 text-emerald-400 text-[10px] sm:text-xs font-mono font-bold border border-emerald-500/25 flex items-center gap-1">
+          <i data-lucide="eye" class="w-3 h-3"></i>
+          <span>1,420</span>
+        </span>
+      </div>
+
+      <!-- Stage 1: Realistic Buffering Spinner (Clicking even during buffering redirects immediately) -->
+      <div id="bufferState" class="absolute inset-0 flex flex-col items-center justify-center gap-2.5 sm:gap-3">
+        <div class="w-12 h-12 sm:w-16 sm:h-16 rounded-full border-4 border-white/15 border-t-red-600 animate-spin"></div>
+        <span class="text-[10px] sm:text-xs font-mono text-white/85 tracking-widest uppercase">CONNECTING 4K STREAM...</span>
+      </div>
+
+      <!-- Stage 2: High-Converting Play / Continue Overlay (Responsive Sizing for Mobile & Desktop) -->
+      <div id="unlockState" class="hidden absolute inset-0 flex flex-col items-center justify-center p-3 sm:p-6 text-center">
+        <div id="modalPlayBtn" class="w-14 h-14 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full bg-red-600 hover:bg-red-500 text-white flex items-center justify-center play-pulse transition transform group-hover:scale-110 shadow-2xl border-2 border-white/35">
+          <i data-lucide="play" class="w-7 h-7 sm:w-10 sm:h-10 md:w-12 md:h-12 ml-1 fill-white"></i>
+        </div>
+        <div class="mt-3 sm:mt-5 px-4 py-2 sm:px-6 sm:py-2.5 rounded-full bg-gradient-to-r from-red-600 to-red-700 hover:from-red-500 hover:to-red-600 text-white font-extrabold text-[10px] sm:text-xs md:text-sm tracking-wider uppercase flex items-center gap-1.5 sm:gap-2 shadow-[0_0_30px_rgba(229,9,20,0.65)] border border-red-400/40">
+          <i data-lucide="volume-2" class="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-bounce shrink-0"></i>
+          <span>TAP TO UNMUTE & WATCH FULL VIDEO (18+)</span>
+        </div>
+      </div>
+
+      <!-- Bottom Authentic Video Player Control Bar -->
+      <div class="absolute bottom-0 inset-x-0 p-2.5 sm:p-4 bg-gradient-to-t from-black via-black/90 to-transparent flex flex-col gap-1.5 sm:gap-2">
+        <!-- Animated Red Scrubber Timeline -->
+        <div class="w-full h-1 sm:h-1.5 bg-zinc-800/90 rounded-full overflow-hidden relative flex items-center">
+          <div id="modalScrubBar" class="h-full bg-red-600 w-0 transition-all duration-1000 ease-out"></div>
+        </div>
+
+        <!-- Player Controls & Timestamp -->
+        <div class="flex items-center justify-between text-white">
+          <div class="flex items-center gap-2.5 sm:gap-3.5">
+            <i data-lucide="play" class="w-3.5 h-3.5 sm:w-5 sm:h-5 fill-white text-white"></i>
+            <i data-lucide="volume-x" class="w-3.5 h-3.5 sm:w-5 sm:h-5 text-red-500 animate-pulse"></i>
+            <div class="w-10 sm:w-16 h-1 bg-white/25 rounded-full overflow-hidden hidden xs:block">
+              <div class="w-3/4 h-full bg-red-500"></div>
+            </div>
+            <span id="modalTimer" class="text-[10px] sm:text-xs font-mono font-bold text-neutral-200">00:03 / 08:42</span>
+          </div>
+          <div class="flex items-center gap-2.5 sm:gap-3.5">
+            <span class="px-1.5 py-0.5 rounded bg-red-600 text-[9px] sm:text-[10px] font-extrabold">4K</span>
+            <i data-lucide="settings" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-300"></i>
+            <i data-lucide="maximize" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-neutral-300"></i>
+          </div>
+        </div>
+      </div>
+
+    </a>
+  </div>
+
+  <script>
+    // =========================================================================
+    // 🔗 TARGET OFFER REDIRECT URL (OPENS IN SAME TAB EVERYWHERE):
+    // =========================================================================
+    const OFFER_REDIRECT_URL = "https://auctionr.org/4/16b5f2c993afc614babb488d2a8490b6";
+
+    // 40 High-Glamour Alluring European Portrait & Fashion Model Thumbnails (16:9 Optimized)
+    const videoItems = [
+      { id: 1,  duration: "04:36", progress: 35, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,842", img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=720&q=80" },
+      { id: 2,  duration: "12:18", progress: 65, badge: "HD", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "940",   img: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=720&q=80" },
+      { id: 3,  duration: "08:25", progress: 22, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "2,310", img: "https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=720&q=80" },
+      { id: 4,  duration: "06:49", progress: 78, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,120", img: "https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=crop&w=720&q=80" },
+      { id: 5,  duration: "15:04", progress: 45, badge: "HD", status: "LIVE",    isLive: true,  tag: "live", viewers: "3,090", img: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=720&q=80" },
+      { id: 6,  duration: "03:52", progress: 18, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "780",   img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&w=720&q=80" },
+      { id: 7,  duration: "09:14", progress: 55, badge: "HD", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,560", img: "https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=crop&w=720&q=80" },
+      { id: 8,  duration: "19:40", progress: 70, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "2,150", img: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&w=720&q=80" },
+      { id: 9,  duration: "05:25", progress: 30, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,980", img: "https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?auto=format&fit=crop&w=720&q=80" },
+      { id: 10, duration: "11:08", progress: 50, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "890",   img: "https://images.unsplash.com/photo-1502823403499-6ccfcf4fb453?auto=format&fit=crop&w=720&q=80" },
+      { id: 11, duration: "07:33", progress: 28, badge: "HD", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,430", img: "https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=720&q=80" },
+      { id: 12, duration: "14:21", progress: 62, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,670", img: "https://images.unsplash.com/photo-1469334031218-e382a71b716b?auto=format&fit=crop&w=720&q=80" },
+      { id: 13, duration: "02:58", progress: 84, badge: "HD", status: "LIVE",    isLive: true,  tag: "live", viewers: "2,740", img: "https://images.unsplash.com/photo-1509631179647-0177331693ae?auto=format&fit=crop&w=720&q=80" },
+      { id: 14, duration: "16:45", progress: 40, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,050", img: "https://images.unsplash.com/photo-1492106087820-71f1a00d2b11?auto=format&fit=crop&w=720&q=80" },
+      { id: 15, duration: "10:12", progress: 24, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "3,410", img: "https://images.unsplash.com/photo-1521119989659-a83eee488004?auto=format&fit=crop&w=720&q=80" },
+      { id: 16, duration: "06:15", progress: 48, badge: "HD", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "920",   img: "https://images.unsplash.com/photo-1519699047748-de8e457a634e?auto=format&fit=crop&w=720&q=80" },
+      { id: 17, duration: "13:47", progress: 72, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,890", img: "https://images.unsplash.com/photo-1526510747491-58f928ec870f?auto=format&fit=crop&w=720&q=80" },
+      { id: 18, duration: "04:09", progress: 33, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,210", img: "https://images.unsplash.com/photo-1504703395950-b89145a5425b?auto=format&fit=crop&w=720&q=80" },
+      { id: 19, duration: "18:22", progress: 58, badge: "HD", status: "LIVE",    isLive: true,  tag: "live", viewers: "2,520", img: "https://images.unsplash.com/photo-1512310604669-443f26c35f52?auto=format&fit=crop&w=720&q=80" },
+      { id: 20, duration: "07:50", progress: 27, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "840",   img: "https://images.unsplash.com/photo-1485875437342-9b39470b3d95?auto=format&fit=crop&w=720&q=80" },
+      { id: 21, duration: "05:41", progress: 64, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,760", img: "https://images.unsplash.com/photo-1496440737103-cd596325d314?auto=format&fit=crop&w=720&q=80" },
+      { id: 22, duration: "11:36", progress: 39, badge: "HD", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,110", img: "https://images.unsplash.com/photo-1503185912284-5271ff81b9a8?auto=format&fit=crop&w=720&q=80" },
+      { id: 23, duration: "08:05", progress: 81, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "2,930", img: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&w=720&q=80" },
+      { id: 24, duration: "17:19", progress: 19, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "730",   img: "https://images.unsplash.com/photo-1514315384763-ba401779410f?auto=format&fit=crop&w=720&q=80" },
+      { id: 25, duration: "03:44", progress: 52, badge: "HD", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,640", img: "https://images.unsplash.com/photo-1524250502761-1ac6f2e30d43?auto=format&fit=crop&w=720&q=80" },
+      { id: 26, duration: "14:58", progress: 67, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,380", img: "https://images.unsplash.com/photo-1516726817505-f5ed825624d8?auto=format&fit=crop&w=720&q=80" },
+      { id: 27, duration: "09:27", progress: 31, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "2,210", img: "https://images.unsplash.com/photo-1500917293891-ef795e70e1f6?auto=format&fit=crop&w=720&q=80" },
+      { id: 28, duration: "06:03", progress: 74, badge: "HD", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "960",   img: "https://images.unsplash.com/photo-1479936343636-73cdc5aae0c3?auto=format&fit=crop&w=720&q=80" },
+      { id: 29, duration: "12:49", progress: 43, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,590", img: "https://images.unsplash.com/photo-1506956191951-7a88da4435e5?auto=format&fit=crop&w=720&q=80" },
+      { id: 30, duration: "21:15", progress: 88, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "2,490", img: "https://images.unsplash.com/photo-1513379733131-47fc74b45fc7?auto=format&fit=crop&w=720&q=80" },
+      { id: 31, duration: "04:55", progress: 26, badge: "HD", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,320", img: "https://images.unsplash.com/photo-1534751516642-a1af1ef26a56?auto=format&fit=crop&w=720&q=80" },
+      { id: 32, duration: "10:38", progress: 59, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,080", img: "https://images.unsplash.com/photo-1464863979621-258859e62245?auto=format&fit=crop&w=720&q=80" },
+      { id: 33, duration: "07:12", progress: 37, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "2,040", img: "https://images.unsplash.com/photo-1507101105822-7472b28e22ac?auto=format&fit=crop&w=720&q=80" },
+      { id: 34, duration: "15:30", progress: 69, badge: "HD", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "870",   img: "https://images.unsplash.com/photo-1517365830460-955ce3ccd263?auto=format&fit=crop&w=720&q=80" },
+      { id: 35, duration: "05:18", progress: 47, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "2,680", img: "https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=720&q=80" },
+      { id: 36, duration: "13:06", progress: 53, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,490", img: "https://images.unsplash.com/photo-1515202913167-d9a698095ebf?auto=format&fit=crop&w=720&q=80" },
+      { id: 37, duration: "06:42", progress: 61, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "1,910", img: "https://images.unsplash.com/photo-1524502397800-2eeaad7c3fe5?auto=format&fit=crop&w=720&q=80" },
+      { id: 38, duration: "09:51", progress: 34, badge: "HD", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,170", img: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=720&q=80" },
+      { id: 39, duration: "11:24", progress: 76, badge: "4K", status: "LIVE",    isLive: true,  tag: "live", viewers: "2,850", img: "https://images.unsplash.com/photo-1522075469751-3a6694fb2f61?auto=format&fit=crop&w=720&q=80" },
+      { id: 40, duration: "08:19", progress: 42, badge: "4K", status: "PRIVATE", isLive: false, tag: "4k",   viewers: "1,340", img: "https://images.unsplash.com/photo-1542206395-9feb3edaa68d?auto=format&fit=crop&w=720&q=80" }
+    ];
+
+    let activeCategory = 'all';
+
+    // Render Pure 16:9 Video Thumbnail Grid (Strictly ZERO Text Under Cards)
+    function renderVideoWall() {
+      const wall = document.getElementById('videoWall');
+      wall.innerHTML = '';
+
+      const list = activeCategory === 'all'
+        ? videoItems
+        : videoItems.filter(item => item.tag === activeCategory);
+
+      list.forEach((item, idx) => {
+        const card = document.createElement('div');
+        card.className = "video-thumb group";
+        card.setAttribute('role', 'button');
+        card.setAttribute('tabindex', '0');
+        card.onclick = () => triggerQuickPlayer(idx);
+        card.onkeydown = (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            triggerQuickPlayer(idx);
+          }
+        };
+
+        card.innerHTML = `
+          <!-- 16:9 High-Glamour Model Frame with Automatic Fallback -->
+          <img 
+            src="${item.img}" 
+            alt="Stream ${item.id}" 
+            loading="${idx < 12 ? 'eager' : 'lazy'}"
+            decoding="async"
+            onerror="this.onerror=null;this.src='https://placehold.co/640x360/12121a/e50914?text=LIVE+4K'"
+          >
+
+          <!-- Shimmer Video Preview Effect -->
+          <div class="preview-shimmer absolute inset-0 pointer-events-none"></div>
+
+          <!-- Subtle Cinema Gradient Overlay for Badge Legibility -->
+          <div class="absolute inset-0 bg-gradient-to-t from-black/85 via-transparent to-black/40 pointer-events-none"></div>
+
+          <!-- Top-Left Status Badge: LIVE or PRIVATE -->
+          <div class="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 flex items-center gap-1 pointer-events-none">
+            ${item.isLive ? `
+              <span class="micro-badge bg-red-600/95 text-white flex items-center gap-1 shadow">
+                <span class="w-1.5 h-1.5 rounded-full bg-white animate-ping"></span>
+                <span>LIVE</span>
+              </span>
+            ` : `
+              <span class="micro-badge bg-black/75 backdrop-blur-md text-rose-300 border border-rose-500/30 flex items-center gap-1">
+                <span class="w-1 h-1 rounded-full bg-rose-400"></span>
+                <span>PRIVATE</span>
+              </span>
+            `}
+          </div>
+
+          <!-- Top-Right Resolution Badge: 4K / HD -->
+          <div class="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 flex items-center gap-1 pointer-events-none">
+            <span class="micro-badge bg-black/75 backdrop-blur-md text-white border border-white/15">
+              ${item.badge}
+            </span>
+          </div>
+
+          <!-- Center Proportional Play Button (Scaled with CSS clamp() so faces stay clear) -->
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="play-circle">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <polygon points="6 3 20 12 6 21 6 3"></polygon>
+              </svg>
+            </div>
+          </div>
+
+          <!-- Bottom-Left Mute Indicator & Mini Volume Track -->
+          <div class="absolute bottom-1.5 left-1.5 sm:bottom-2 sm:left-2.5 flex items-center gap-1 sm:gap-1.5 opacity-90 group-hover:opacity-100 pointer-events-none">
+            <div class="w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-black/75 border border-white/15 flex items-center justify-center text-white group-hover:text-red-400">
+              <i data-lucide="volume-x" class="w-2.5 h-2.5 sm:w-3 sm:h-3"></i>
+            </div>
+            <div class="w-5 sm:w-8 h-1 rounded-full bg-white/25 overflow-hidden hidden xs:block">
+              <div class="w-2/3 h-full bg-red-500"></div>
+            </div>
+          </div>
+
+          <!-- Bottom-Right Realistic Video Duration Timestamp -->
+          <div class="absolute bottom-1.5 right-1.5 sm:bottom-2 sm:right-2 duration-badge pointer-events-none">
+            ${item.duration}
+          </div>
+
+          <!-- Bottom Red YouTube-Style Progress & Hover Scrub Bar -->
+          <div class="absolute bottom-0 inset-x-0 h-[3px] sm:h-1 bg-zinc-800/95 flex items-center pointer-events-none">
+            <div class="scrub-fill h-full bg-red-600 relative" style="width: ${item.progress}%">
+              <span class="opacity-0 group-hover:opacity-100 absolute -right-1 -top-0.5 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_8px_#e50914] transition-opacity"></span>
+            </div>
+          </div>
+        `;
+
+        wall.appendChild(card);
+      });
+
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+
+    // Filter Grid by Category Pill (ALL / LIVE / 4K)
+    function filterGrid(category, btn) {
+      activeCategory = category;
+      document.querySelectorAll('.tab-pill').forEach(el => {
+        el.classList.remove('bg-red-600', 'text-white');
+        el.classList.add('text-neutral-300');
+      });
+      btn.classList.remove('text-neutral-300');
+      btn.classList.add('bg-red-600', 'text-white');
+      renderVideoWall();
+    }
+
+    // Responsive Column Switcher (Supports Mobile 1x/2x/3x & Desktop AUTO/4x/5x/6x/7x/8x)
+    function setGridColumns(mode, btn) {
+      const wall = document.getElementById('videoWall');
+
+      if (mode === 'auto') {
+        wall.className = 'video-grid-auto';
+      } else {
+        wall.className = `video-grid-manual-${mode}`;
+      }
+
+      // Update active button state inside the clicked group
+      const isMobileBtn = btn.classList.contains('col-btn-mobile');
+      const selector = isMobileBtn ? '.col-btn-mobile' : '.col-btn-desktop';
+      document.querySelectorAll(selector).forEach(el => {
+        el.classList.remove('bg-red-600', 'text-white');
+        el.classList.add('text-neutral-400');
+      });
+      btn.classList.remove('text-neutral-400');
+      btn.classList.add('bg-red-600', 'text-white');
+    }
+
+    // Open Fullscreen Video Player Modal on Clicking ANY Card
+    let bufferTimeout;
+    function triggerQuickPlayer(index) {
+      const list = activeCategory === 'all'
+        ? videoItems
+        : videoItems.filter(item => item.tag === activeCategory);
+      const item = list[index] || videoItems[0];
+
+      const modal = document.getElementById('playerModal');
+      const poster = document.getElementById('modalPoster');
+      const timer = document.getElementById('modalTimer');
+      const badge = document.getElementById('modalBadge');
+      const viewers = document.getElementById('modalViewers');
+      const scrubBar = document.getElementById('modalScrubBar');
+      const bufferState = document.getElementById('bufferState');
+      const unlockState = document.getElementById('unlockState');
+
+      poster.src = item.img;
+      timer.innerText = `00:03 / ${item.duration}`;
+      badge.innerText = `${item.badge} 60FPS`;
+      viewers.innerHTML = `<i data-lucide="eye" class="w-3 h-3"></i><span>${item.viewers}</span>`;
+      scrubBar.style.width = '4%';
+
+      bufferState.classList.remove('hidden');
+      unlockState.classList.add('hidden');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+
+      setTimeout(() => {
+        scrubBar.style.width = `${item.progress}%`;
+      }, 60);
+
+      clearTimeout(bufferTimeout);
+      bufferTimeout = setTimeout(() => {
+        bufferState.classList.add('hidden');
+        unlockState.classList.remove('hidden');
+      }, 650);
+
+      if (window.lucide) {
+        lucide.createIcons();
+      }
+    }
+
+    // Immediate Same-Tab Redirect when Clicking ANYWHERE Inside or Around the Video Player Modal
+    function goToOffer(e) {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      window.location.href = OFFER_REDIRECT_URL;
+    }
+
+    // Subtle Live Online Counter Fluctuation
+    setInterval(() => {
+      const el = document.getElementById('onlineCounter');
+      if (el) {
+        const base = 4820 + Math.floor(Math.random() * 65);
+        el.innerText = base.toLocaleString();
+      }
+    }, 3500);
+
+    // Initialize Video Grid on Page Load
+    window.addEventListener('DOMContentLoaded', () => {
+      renderVideoWall();
+    });
+  </script>
+</body>
+</html>
